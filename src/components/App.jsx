@@ -26,35 +26,37 @@ export const App = () => {
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [loadMore, setLoadMore] = useState(false);
-  const [totalPages, setTotalPages] = useState(1);
   const [activeImage, setActiveImage] = useState(null);
 
-  const fetchAllImages = async () => {
-    try {
-      setIsLoading(true);
-      if (!query) return;
+  useEffect(() => {
+    const fetchAllImages = async () => {
+      try {
+        setIsLoading(true);
+        if (!query) return;
 
-      const fetchedImages = await fetchImages(query, page);
-      const pagesCount = Math.ceil(fetchedImages.totalHits / 12);
+        const fetchedImages = await fetchImages(query, page);
+        const pagesCount = Math.ceil(fetchedImages.totalHits / 12);
 
-      setTotalPages(pagesCount);
-      setImages(prevImages => (page === 1 ? fetchedImages.hits : [...prevImages, ...fetchedImages.hits]));
-      setLoadMore(page < pagesCount);
-      setIsLoading(false);
-    } catch (error) {
-      setError(error.message);
-      setIsLoading(false);
+        setImages(prevImages => (page === 1 ? fetchedImages.hits : [...prevImages, ...fetchedImages.hits]));
+        setLoadMore(page < pagesCount);
+        setIsLoading(false);
+      } catch (error) {
+        setIsLoading(false);
+      }
+    };
+
+    if (query || page > 1) {
+      fetchAllImages();
     }
-  };
+  }, [page, query]);
 
   const onLoadMore = () => {
     setIsLoading(true);
     setPage(prevPage => prevPage + 1);
   };
 
-  const handleSubmit = async event => {
+   const handleSubmit = async event => {
     event.preventDefault();
     const search = event.currentTarget.elements.search.value;
     if (!search.trim()) {
@@ -70,13 +72,11 @@ export const App = () => {
         if (fetchedImages.totalHits === 0) {
           Notify.info('No images found for your query');
         } else {
-          setTotalPages(pagesCount);
           setImages(fetchedImages.hits);
           setLoadMore(1 < pagesCount);
           setIsLoading(false);
         }
       } catch (error) {
-        setError(error.message);
         setIsLoading(false);
       }
     }
@@ -91,13 +91,6 @@ export const App = () => {
     setActiveImage(null);
     setIsModalOpen(false);
   };
-
-
-   useEffect(() => {
-    if (query || page > 1) {
-      fetchAllImages();
-    }
-  }, [page, query]);
 
   return (
     <div>
